@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { initializeSessionListeners, sessions } from '$lib/stores/sessions';
+	import { refreshAccount } from '$lib/stores/account';
 	import { initializeSubagentPolling } from '$lib/stores/subagents';
 	import { initializeTasksPolling } from '$lib/stores/tasks';
 	import { getSessions } from '$lib/api';
@@ -23,6 +24,7 @@
 				const initialSessions = await getSessions();
 				sessions.set(initialSessions);
 			}
+			refreshAccount();
 
 			runStartupCheck();
 		}

@@ -9,6 +9,7 @@ import type { Session, Conversation } from '../types';
 import { SessionStatus } from '../types';
 import { isDemoMode } from '../demo/mode';
 import { openSession } from '../api';
+import { refreshAccount } from './account';
 import { wsClient, useWebSocket, getStoredWsUrl, isTauri } from '../ws';
 
 /**
@@ -161,6 +162,11 @@ async function initWebSocketListeners() {
 		return;
 	}
 
+	// Fetch the account once on connect (web/mobile). We avoid refetching on
+	// every sessionsUpdated because the WS client serializes one request at a
+	// time; account changes are rare, so a reconnect/refresh is enough.
+	refreshAccount();
+
 	wsClient.on('sessionsUpdated', (data: Session[]) => {
 		if (!get(isDemoMode)) {
 			sessions.set(data);
@@ -179,6 +185,9 @@ async function initTauriListeners() {
 	await listen<Session[]>('sessions-updated', (event) => {
 		if (!get(isDemoMode)) {
 			sessions.set(event.payload);
+			// Keep the account chip in sync with /login switches. Cheap: a
+			// single local ~/.claude.json read on desktop.
+			refreshAccount();
 		}
 	});
 
