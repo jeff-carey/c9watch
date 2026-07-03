@@ -5,7 +5,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { get } from 'svelte/store';
-import type { Session, Conversation, HistoryEntry, DeepSearchHit, CostData, ProjectMemory, LogEntry } from './types';
+import type { Session, Conversation, HistoryEntry, DeepSearchHit, CostData, ProjectMemory, LogEntry, Account } from './types';
 import { isDemoMode } from './demo/mode';
 import { getDemoSessions, demoConversations } from './demo/data';
 import { wsClient, useWebSocket } from './ws';
@@ -136,6 +136,20 @@ export async function getMemoryFiles(): Promise<ProjectMemory[]> {
 	if (get(isDemoMode)) return [];
 	if (useWebSocket()) return [];
 	return await invoke<ProjectMemory[]>('get_memory_files');
+}
+
+/**
+ * Get the globally logged-in Claude account (from ~/.claude.json).
+ * Returns null when logged out or unreadable.
+ */
+export async function getAccount(): Promise<Account | null> {
+	if (get(isDemoMode)) {
+		return { email: 'demo@example.com', organization: 'Demo Org', accountType: 'claude_team' };
+	}
+	if (useWebSocket()) {
+		return await wsClient.request<Account | null>('getAccount');
+	}
+	return await invoke<Account | null>('get_account');
 }
 
 /**

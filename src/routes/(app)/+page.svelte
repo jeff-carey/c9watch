@@ -10,6 +10,7 @@
 		currentConversation,
 		statusSummary
 	} from '$lib/stores/sessions';
+	import { account } from '$lib/stores/account';
 	import { getConversation, stopSession, openSession } from '$lib/api';
 	import { isDemoMode, toggleDemoMode } from '$lib/demo';
 	import { isTauri } from '$lib/ws';
@@ -567,7 +568,7 @@
 				
 				{#if filteredSessions.length > 0}
 					<div class="system-status-container">
-						<StatusBar total={filteredSessions.length} summary={filteredSummary} />
+						<StatusBar total={filteredSessions.length} summary={filteredSummary} account={$account} />
 					</div>
 				{/if}
 			</section>
