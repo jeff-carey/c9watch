@@ -1,3 +1,9 @@
+<!-- FORK BANNER — personal branch only; never merged upstream -->
+> ### 🔱 This is a modified fork of c9watch
+> The default `modded` branch is a complete, buildable build with local enhancements.
+> **→ See [FORK.md](FORK.md)** for what's changed and how to build/install it.
+> Development & branch layout: [CLAUDE.md](CLAUDE.md) · Upstream: [minchenlee/c9watch](https://github.com/minchenlee/c9watch)
+
 <p align="center">
   <img src="src-tauri/icons/icon.png" width="120" alt="c9watch icon" />
 </p>
