@@ -13,7 +13,11 @@ use wait_timeout::ChildExt;
 
 #[derive(Deserialize, Debug)]
 struct CliAgent {
-    pid: u32,
+    // Daemon-hosted background agents are listed without a `pid` (they carry
+    // an `id` instead); default to None so one such entry doesn't fail the
+    // whole parse. Pid-less entries are filtered out in detect().
+    #[serde(default)]
+    pid: Option<u32>,
     cwd: PathBuf,
     // `kind` was added alongside background-pinned sessions in CC 2.1.147.
     // 2.1.145–146 emit `claude agents --json` without it; default to "interactive".
@@ -53,10 +57,10 @@ impl CliSessionSource {
         lookup_with_cache(&home, &mut self.path_cache, cwd, session_id)
     }
 
-    fn map_agent_to_session(&mut self, a: CliAgent) -> DetectedSession {
+    fn map_agent_to_session(&mut self, pid: u32, a: CliAgent) -> DetectedSession {
         let project_path = self.project_path_for_session(&a.cwd, &a.session_id);
         DetectedSession {
-            pid: a.pid,
+            pid,
             project_name: a
                 .cwd
                 .file_name()
@@ -143,8 +147,12 @@ impl SessionSource for CliSessionSource {
         // If the file is missing or unreadable, keep the agent (older CC versions).
         let sessions: Vec<DetectedSession> = agents
             .into_iter()
-            .filter(|a| is_cli_entrypoint(a.pid))
-            .map(|a| self.map_agent_to_session(a))
+            // Entries without a pid (daemon-hosted background agents) can't
+            // be process-matched or focused; skip them.
+            .filter_map(|a| {
+                let pid = a.pid?;
+                is_cli_entrypoint(pid).then(|| self.map_agent_to_session(pid, a))
+            })
             .collect();
 
         Ok((sessions, DetectionDiagnostics::default()))
@@ -243,9 +251,24 @@ mod tests {
     fn parse_cli_output_full_schema() {
         let agents: Vec<CliAgent> = serde_json::from_str(full_schema_json()).unwrap();
         assert_eq!(agents.len(), 2);
-        assert_eq!(agents[0].pid, 1);
+        assert_eq!(agents[0].pid, Some(1));
         assert_eq!(agents[0].session_id, "sid-a");
         assert_eq!(agents[1].name.as_deref(), Some("my-bg"));
+    }
+
+    #[test]
+    fn parse_cli_output_pidless_background_agent_yields_none() {
+        // Daemon-hosted background agents are listed without a `pid` (they
+        // carry an `id` instead); one such entry must not fail the parse of
+        // the sessions alongside it.
+        let json = r#"[
+          {"id":"89aa5b55","cwd":"/tmp/bg","kind":"background","startedAt":100,"sessionId":"sid-bg","name":"bg","state":"blocked"},
+          {"pid":2,"cwd":"/tmp/b","kind":"interactive","startedAt":200,"sessionId":"sid-b","status":"idle"}
+        ]"#;
+        let agents: Vec<CliAgent> = serde_json::from_str(json).unwrap();
+        assert_eq!(agents.len(), 2);
+        assert_eq!(agents[0].pid, None);
+        assert_eq!(agents[1].pid, Some(2));
     }
 
     #[test]

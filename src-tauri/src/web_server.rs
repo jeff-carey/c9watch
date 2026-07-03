@@ -63,6 +63,9 @@ enum ClientMsg {
 
     #[serde(rename = "getMemoryFiles")]
     GetMemoryFiles,
+
+    #[serde(rename = "getAccount")]
+    GetAccount,
 }
 
 /// Server → Client messages
@@ -89,6 +92,9 @@ enum ServerMsg {
 
     #[serde(rename = "memoryFiles")]
     MemoryFiles { data: serde_json::Value },
+
+    #[serde(rename = "account")]
+    Account { data: serde_json::Value },
 }
 
 // ── Server entrypoint ───────────────────────────────────────────────
@@ -299,6 +305,12 @@ async fn handle_message(msg: ClientMsg) -> ServerMsg {
                 data: serde_json::to_value(&files).unwrap_or_default(),
             },
             Err(e) => ServerMsg::Error { message: e },
+        },
+
+        ClientMsg::GetAccount => ServerMsg::Account {
+            // `read_account()` returns Option; serializes to the account object
+            // or JSON null when logged out.
+            data: serde_json::to_value(crate::session::read_account()).unwrap_or_default(),
         },
     }
 }

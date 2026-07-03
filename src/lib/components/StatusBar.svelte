@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import type { Account } from '$lib/types';
 
 	interface Props {
 		summary: {
@@ -8,9 +9,20 @@
 			input: number;
 		};
 		total: number;
+		account?: Account | null;
 	}
 
-	let { summary, total }: Props = $props();
+	let { summary, total, account = null }: Props = $props();
+
+	// Prefer the (usually short) team org name; personal orgs have long
+	// auto-generated names, so fall back to the email in that case.
+	let accountLabel = $derived(
+		account
+			? account.accountType === 'claude_team' && account.organization
+				? account.organization
+				: account.email
+			: ''
+	);
 
 	let trackWidth = $state(0);
 	let isSweeping = $state(false);
@@ -88,6 +100,16 @@
 </script>
 
 <div class="system-status-bar">
+
+	{#if account}
+		<div class="account-chip" title={account.email}>
+			<svg class="account-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+				<circle cx="12" cy="7" r="4" />
+			</svg>
+			<span class="account-label">{accountLabel}</span>
+		</div>
+	{/if}
 
 	<div class="progress-track" class:empty={total === 0} bind:clientWidth={trackWidth}>
 		<div class="grid-container" style="grid-template-columns: repeat({columns}, 1fr);">
@@ -227,6 +249,30 @@
 	.legend-item .dot.working { background: var(--status-working); }
 	.legend-item .dot.permission { background: var(--status-permission); }
 	.legend-item .dot.input { background: var(--status-input); }
+
+	.account-chip {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		align-self: flex-start;
+		max-width: 100%;
+		color: var(--text-secondary);
+	}
+
+	.account-chip .account-icon {
+		flex-shrink: 0;
+		opacity: 0.8;
+	}
+
+	.account-chip .account-label {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		color: var(--text-secondary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
 	.legend-item .label {
 		font-family: var(--font-mono);

@@ -244,3 +244,10 @@ export interface Task {
   activeForm: string;
   status: TaskStatus;
 }
+
+/** The globally logged-in Claude account (from ~/.claude.json). */
+export interface Account {
+  email: string;
+  organization: string | null;
+  accountType: string | null;
+}

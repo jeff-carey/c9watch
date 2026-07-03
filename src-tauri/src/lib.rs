@@ -113,6 +113,14 @@ async fn get_memory_files() -> Result<Vec<session::ProjectMemory>, String> {
     session::get_memory_files()
 }
 
+/// Returns the globally logged-in Claude account (from ~/.claude.json), or
+/// `None` when logged out / the file is unreadable.
+#[cfg(all(not(mobile), feature = "gui"))]
+#[tauri::command]
+async fn get_account() -> Result<Option<session::Account>, String> {
+    Ok(session::read_account())
+}
+
 /// Returns a map of parent_session_id -> subagent invocations detected by
 /// parsing each session's JSONL transcript for Agent/Task tool_use entries.
 #[cfg(all(not(mobile), feature = "gui"))]
@@ -603,6 +611,7 @@ pub fn run() {
             deep_search_sessions,
             get_cost_data,
             get_memory_files,
+            get_account,
             get_subagents,
             get_subagent_transcript,
             get_session_tasks,
