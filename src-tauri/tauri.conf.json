@@ -58,7 +58,7 @@
       "signingIdentity": "-",
       "entitlements": "entitlements.plist"
     },
-    "createUpdaterArtifacts": "v1Compatible"
+    "createUpdaterArtifacts": false
   },
   "plugins": {
     "updater": {
