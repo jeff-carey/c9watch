@@ -70,8 +70,9 @@ See **[FORK.md](FORK.md)** for the full build/install walkthrough. Key facts:
   ```bash
   PATH="$HOME/.cargo/bin:$PATH" npm run tauri build -- --target aarch64-apple-darwin
   ```
-- The build ends with `A public key has been found, but no private key` — this
-  is the **updater-signing** step and is **harmless**; the `.app` is still built.
+- The fork sets `bundle.createUpdaterArtifacts: false` in `tauri.conf.json`, so
+  builds need no signing key and the app won't auto-update to upstream. (Upstream
+  ships `"v1Compatible"`, which errors without `TAURI_SIGNING_PRIVATE_KEY`.)
 - **Moving the repo invalidates the Tauri build cache** (it bakes absolute paths
   into `target/`). If a build suddenly can't find a generated permissions file,
   clear `target/*/build/tauri-*` and `target/*/.fingerprint/c9watch-*` (or
@@ -101,6 +102,31 @@ blocks a copied `.app` until quarantine is cleared
 builds from source (cleanest — see FORK.md). Every rebuild changes the code
 signature, so macOS **re-prompts for "control Terminal.app" Automation consent**
 on the next session-focus after a reinstall.
+
+## Cutting a release
+
+Prebuilt binaries are published as **GitHub Releases** on the fork (never
+committed to the repo — that would bloat it). The release workflow
+(`.github/workflows/release.yml`) runs on a `v*` tag push, builds both
+architectures + CLI on GitHub runners, and creates a **draft** release
+(upstream sets `draft: true` by design — build then review):
+
+```bash
+git tag v0.8.1-mods.2 modded          # convention: v<upstream-version>-mods.<n>
+git push origin v0.8.1-mods.2
+# ...wait for Actions, then publish the draft as a pre-release:
+gh release edit v0.8.1-mods.2 --repo jeff-carey/c9watch --draft=false --prerelease
+```
+
+Always `--prerelease` (these are unofficial, ad-hoc signed). The tag naming
+(`v<upstream-version>-mods.<n>`) makes the upstream base obvious.
+
+Fork-only prerequisites that make this work — all already applied on `personal`
+(don't undo them): Actions must be enabled once in the fork's Actions tab (no
+API); the `build-macos` "Build Tauri app" step must NOT pass the empty
+`APPLE_*`/`TAURI_SIGNING_*` signing env (tauri would try to codesign and fail);
+and `createUpdaterArtifacts` must be `false`. If cutting a release from a Claude
+session, prefer the `/release` skill if present.
 
 ## Upstream contribution conventions
 

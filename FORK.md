@@ -14,9 +14,28 @@ complete, buildable modified app.**
 - **Detector fix** — the session detector no longer crashes when
   `claude agents --json` lists a background agent without a `pid`.
 
-## Build it yourself (recommended)
+## Grab a prebuilt build (easiest)
 
-Building locally gives you a native binary and avoids macOS Gatekeeper prompts.
+Prebuilt `.dmg` / `.app` bundles for both architectures are attached to the
+fork's releases:
+
+**→ https://github.com/jeff-carey/c9watch/releases**
+
+Download the `.dmg` matching your Mac (`aarch64` for Apple Silicon, `x86_64`
+for Intel — the x86_64 build also runs on Apple Silicon via Rosetta 2). These
+are **ad-hoc signed, not notarized**, so clear the quarantine flag once after
+installing:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/c9watch.app
+```
+
+(or right-click the app → **Open** → **Open**). On first launch, approve the
+macOS "control Terminal.app" prompt so click-to-focus works.
+
+## Or build it yourself
+
+Building locally gives you a native binary and avoids the quarantine step.
 
 **Prerequisites:** [Rust](https://rustup.rs/), [Node.js](https://nodejs.org/)
 v18+, and Xcode Command Line Tools (`xcode-select --install`).
@@ -33,23 +52,6 @@ npm run tauri build
 
 The build produces a binary matching *your* Mac's architecture. On first
 launch, approve the macOS "control Terminal.app" prompt so click-to-focus works.
-
-> The build finishes with `A public key has been found, but no private key` —
-> that's the harmless updater-signing step; your `.app` is already built.
-
-## Or install a prebuilt `.app`
-
-If Jeff hands you a prebuilt `.app`/`.dmg` instead, it is **ad-hoc signed**
-(not notarized), so macOS Gatekeeper will block it until you clear the
-quarantine flag once:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/c9watch.app
-```
-
-(or right-click the app → **Open** → **Open**). Match the architecture to your
-Mac — an x86_64 build runs on Apple Silicon via Rosetta 2; an arm64 build only
-runs on Apple Silicon.
 
 ## Notes
 
